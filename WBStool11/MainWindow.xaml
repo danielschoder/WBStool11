@@ -4,21 +4,24 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WBStool11"
+        xmlns:viewmodels="clr-namespace:WBStool11.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewmodels:ProjectViewModel}"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="WBStool 11" Height="450" Width="800">
+
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
-                <MenuItem Header="New Project" Click="NewProject_Click"/>
-                <MenuItem Header="Open Project" Click="OpenProject_Click"/>
+                <MenuItem Header="New Project" Command="{Binding NewProjectCommand}" />
+                <MenuItem Header="Open Project" Command="{Binding OpenProjectCommand}" />
                 <Separator />
-                <MenuItem Header="Save Project" Click="SaveProject_Click"/>
-                <MenuItem Header="Save As..." Click="SaveAs_Click"/>
+                <MenuItem Header="Save Project" Command="{Binding SaveProjectCommand}" />
+                <MenuItem Header="Save As..." />
             </MenuItem>
             <MenuItem Header="Edit">
             </MenuItem>
             <MenuItem Header="Help">
-                <MenuItem Header="About" Click="About_Click"/>
+                <MenuItem Header="About" />
             </MenuItem>
         </Menu>
         <Grid>

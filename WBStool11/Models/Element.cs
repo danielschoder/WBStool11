@@ -2,11 +2,11 @@
 
 namespace WBStool11.Models;
 
-public class Project
+public class Element
 {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Description { get; set; }
 
     public ObservableCollection<Element> Elements { get; set; }
 }
