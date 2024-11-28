@@ -47,7 +47,7 @@ public class ProjectService(IFileService fileService) : IProjectService
 
     public void AddNextElement(Element element)
     {
-        element.AddNewLastSibling(Element.Create("New"));
+        element.AddNewSibling(Element.Create("New"));
         CurrentProject.AreChangesPending = true;
     }
 

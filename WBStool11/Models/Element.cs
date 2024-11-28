@@ -40,11 +40,12 @@ public class Element : INotifyPropertyChanged
         return this;
     }
 
-    public Element AddNewLastSibling(Element newElement)
+    public Element AddNewSibling(Element newElement)
     {
         Parent.IsExpanded = true;
         newElement.Parent = Parent;
-        Parent.Elements.Add(newElement);
+        var currentChildIndex = Parent.Elements.IndexOf(this);
+        Parent.Elements.Insert(currentChildIndex + 1, newElement);
         return this;
     }
 
