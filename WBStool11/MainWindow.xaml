@@ -10,25 +10,29 @@
         Title="WBStool 11" Height="450" Width="800">
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="File">
-                <MenuItem Header="New Project" Command="{Binding NewProjectCommand}" />
-                <MenuItem Header="Open Project" Command="{Binding OpenProjectCommand}" />
-                <Separator />
-                <MenuItem Header="Save Project" Command="{Binding SaveProjectCommand}" />
-                <MenuItem Header="Save As..." />
-            </MenuItem>
-            <MenuItem Header="Edit">
-            </MenuItem>
-            <MenuItem Header="Help">
-                <MenuItem Header="About" />
-            </MenuItem>
-        </Menu>
+        <DockPanel DockPanel.Dock="Top" Background="{x:Static SystemColors.MenuBarBrush}">
+            <Menu>
+                <MenuItem Header="File">
+                    <MenuItem Header="New Project" Command="{Binding NewProjectCommand}" />
+                    <MenuItem Header="Open Project" Command="{Binding OpenProjectCommand}" />
+                    <Separator />
+                    <MenuItem Header="Save Project" Command="{Binding SaveProjectCommand}" />
+                    <MenuItem Header="Save As..." Command="{Binding SaveAsProjectCommand}" />
+                </MenuItem>
+                <MenuItem Header="Edit">
+                </MenuItem>
+                <MenuItem Header="Help">
+                    <MenuItem Header="About" />
+                </MenuItem>
+            </Menu>
+            <TextBlock Text="{Binding CurrentProjectName}"
+                       VerticalAlignment="Center"
+                       Margin="10,0"
+                       FontSize="12"
+                       Background="Transparent"/>
+        </DockPanel>
         <Grid>
-            <TextBlock Text="Welcome to the App!" 
-                       HorizontalAlignment="Center" 
-                       VerticalAlignment="Center" 
-                       FontSize="20"/>
+
         </Grid>
     </DockPanel>
 </Window>

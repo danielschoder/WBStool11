@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.Win32;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using WBStool11.Helpers;
@@ -12,6 +13,10 @@ public class ProjectViewModel : INotifyPropertyChanged
     private readonly IFileService _fileService;
 
     private Project _currentProject;
+    private string _currentProjectFileName;
+    private bool _hasPendingChanges;
+    private bool HasCurrentProject => _currentProject is not null;
+    private bool HasFileName => _currentProjectFileName is not null;
 
     public Project CurrentProject
     {
@@ -20,40 +25,113 @@ public class ProjectViewModel : INotifyPropertyChanged
         {
             if (_currentProject != value)
             {
+                if (_currentProject != null)
+                {
+                    _currentProject.PropertyChanged -= OnCurrentProjectPropertyChanged;
+                }
+
                 _currentProject = value;
+
+                if (_currentProject != null)
+                {
+                    _currentProject.PropertyChanged += OnCurrentProjectPropertyChanged;
+                }
+
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(CurrentProjectName));
             }
         }
     }
 
+    public string CurrentProjectName => $"{CurrentProject?.Name ?? string.Empty}{(_hasPendingChanges ? "*" : string.Empty)}";
+
     public ICommand NewProjectCommand { get; }
     public ICommand OpenProjectCommand { get; }
     public ICommand SaveProjectCommand { get; }
+    public ICommand SaveAsProjectCommand { get; }
 
     public ProjectViewModel(IFileService fileService)
     {
         _fileService = fileService;
 
-        NewProjectCommand = new RelayCommand(CreateNewProject);
-        OpenProjectCommand = new RelayCommand(OpenProject);
-        SaveProjectCommand = new RelayCommand(SaveProject);
+        NewProjectCommand = new AsyncRelayCommand(CreateNewProjectAsync);
+        OpenProjectCommand = new AsyncRelayCommand(OpenProjectAsync);
+        SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync);
+        SaveAsProjectCommand = new AsyncRelayCommand(SaveAsProjectAsync);
 
-        CreateNewProject();
+        // await CreateNewProject();
     }
 
-    private void CreateNewProject()
+    private async Task CreateNewProjectAsync()
     {
+        if (_hasPendingChanges)
+        {
+            var cancel = true;
+            if (cancel) { return; }
+            var saveChanges = true;
+            if (saveChanges)
+            {
+                await SaveProjectAsync();
+            }
+        }
         CurrentProject = new Project { Name = "New Project" };
+        _hasPendingChanges = false;
     }
 
-    private void SaveProject()
+    private async Task OpenProjectAsync()
     {
-        _fileService.SaveToFile("project.json", CurrentProject);
+        var openFileDialog = new OpenFileDialog
+        {
+            Title = "Open WBStool Project File",
+            Filter = "WBStool Files (*.wbs)|*.wbs"
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            _currentProjectFileName = openFileDialog.FileName;
+            if (!string.IsNullOrEmpty(_currentProjectFileName))
+            {
+                CurrentProject = await _fileService.ReadFromFileAsync<Project>(_currentProjectFileName);
+            }
+        }
     }
 
-    private void OpenProject()
+    private async Task SaveProjectAsync()
     {
-        CurrentProject = _fileService.ReadFromFile<Project>("project.json");
+        if (!HasCurrentProject) { return; }
+        if (HasFileName)
+        {
+            await _fileService.SaveToFileAsync(_currentProjectFileName, CurrentProject);
+        }
+        else
+        {
+            await SaveAsProjectAsync();
+        }
+    }
+
+    private async Task SaveAsProjectAsync()
+    {
+        if (!HasCurrentProject) { return; }
+        var saveFileDialog = new SaveFileDialog
+        {
+            Title = "Save WBStool Project As",
+            Filter = "WBStool Files (*.wbs)|*.wbs",
+            DefaultExt = ".wbs",
+            FileName = HasFileName
+                ? _currentProjectFileName
+                : $"{Environment.CurrentDirectory}/{CurrentProject.Name}"
+        };
+
+        var result = saveFileDialog.ShowDialog();
+        if (result == true)
+        {
+            _currentProjectFileName = saveFileDialog.FileName;
+            if (!string.IsNullOrEmpty(_currentProjectFileName))
+            {
+                await _fileService.SaveToFileAsync(_currentProjectFileName, CurrentProject);
+                _hasPendingChanges = false;
+            }
+        }
     }
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -61,5 +139,13 @@ public class ProjectViewModel : INotifyPropertyChanged
     protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private void OnCurrentProjectPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Project.Name))
+        {
+            OnPropertyChanged(nameof(CurrentProjectName));
+        }
     }
 }
