@@ -1,10 +1,13 @@
-﻿using System.Windows.Input;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Input;
 using WBStool11.Helpers;
+using WBStool11.Models;
 using WBStool11.Services;
 
 namespace WBStool11.ViewModels;
 
-public class ProjectViewModel
+public class ProjectViewModel : ObservableObject, INotifyPropertyChanged
 {
     public IProjectService ProjectService { get; }
 
@@ -16,15 +19,79 @@ public class ProjectViewModel
 
     public ICommand SaveAsProjectCommand { get; }
 
+    public ObservableCollection<Project> CurrentProject => ProjectService.CurrentProjectAsCollection;
+
+    public string CurrentProjectName
+        => $"{ProjectService.CurrentProject?.Name ?? string.Empty}" +
+            $"{(ProjectService.CurrentProject is not null
+                && ProjectService.CurrentProject.AreChangesPending ? "*" : string.Empty)}";
+
+    private Element _selectedElement;
+    public Element SelectedElement
+    {
+        get => _selectedElement;
+        set
+        {
+            if (_selectedElement != value)
+            {
+                if (_selectedElement is not null)
+                {
+                    _selectedElement.PropertyChanged -= OnProjectPropertyChanged;
+                }
+                _selectedElement = value;
+                if (_selectedElement is not null)
+                {
+                    _selectedElement.PropertyChanged += OnProjectPropertyChanged;
+                }
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public ProjectViewModel(IProjectService projectFileService)
     {
         ProjectService = projectFileService;
 
-        NewProjectCommand = new AsyncRelayCommand(ProjectService.CreateNewProjectAsync);
-        OpenProjectCommand = new AsyncRelayCommand(ProjectService.OpenProjectAsync);
-        SaveProjectCommand = new AsyncRelayCommand(ProjectService.SaveProjectAsync);
-        SaveAsProjectCommand = new AsyncRelayCommand(ProjectService.SaveAsProjectAsync);
-
-        // await CreateNewProject();
+        NewProjectCommand = new AsyncRelayCommand(CreateNewProjectAsync);
+        OpenProjectCommand = new AsyncRelayCommand(OpenProjectAsync);
+        SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync);
+        SaveAsProjectCommand = new AsyncRelayCommand(SaveAsProjectAsync);
     }
+
+    private async Task CreateNewProjectAsync()
+    {
+        if (ProjectService.CurrentProject is not null)
+        {
+            ProjectService.CurrentProject.PropertyChanged -= OnProjectPropertyChanged;
+        }
+        await ProjectService.CreateNewProjectAsync();
+        OnPropertyChanged(nameof(CurrentProjectName));
+        ProjectService.CurrentProject.PropertyChanged += OnProjectPropertyChanged;
+    }
+
+    private async Task OpenProjectAsync()
+    {
+        if (ProjectService.CurrentProject is not null)
+        {
+            ProjectService.CurrentProject.PropertyChanged -= OnProjectPropertyChanged;
+        }
+        await ProjectService.OpenProjectAsync();
+        OnPropertyChanged(nameof(CurrentProjectName));
+        ProjectService.CurrentProject.PropertyChanged += OnProjectPropertyChanged;
+    }
+
+    private async Task SaveProjectAsync()
+    {
+        await ProjectService.SaveProjectAsync();
+        OnPropertyChanged(nameof(CurrentProjectName));
+    }
+
+    private async Task SaveAsProjectAsync()
+    {
+        await ProjectService.SaveAsProjectAsync();
+        OnPropertyChanged(nameof(CurrentProjectName));
+    }
+
+    private void OnProjectPropertyChanged(object sender, PropertyChangedEventArgs e)
+        => OnPropertyChanged(nameof(CurrentProjectName));
 }

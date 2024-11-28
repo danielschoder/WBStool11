@@ -10,7 +10,8 @@
         Title="WBStool 11" Height="450" Width="800">
 
     <DockPanel>
-        <DockPanel DockPanel.Dock="Top" Background="{x:Static SystemColors.MenuBarBrush}">
+        <DockPanel DockPanel.Dock="Top"
+                   Background="{x:Static SystemColors.MenuBarBrush}">
             <Menu>
                 <MenuItem Header="File">
                     <MenuItem Header="New Project" Command="{Binding NewProjectCommand}" />
@@ -19,26 +20,59 @@
                     <MenuItem Header="Save Project" Command="{Binding SaveProjectCommand}" />
                     <MenuItem Header="Save As..." Command="{Binding SaveAsProjectCommand}" />
                 </MenuItem>
+
                 <MenuItem Header="Edit">
                 </MenuItem>
+
                 <MenuItem Header="Help">
                     <MenuItem Header="About" />
                 </MenuItem>
             </Menu>
-            <TextBlock Text="{Binding ProjectService.CurrentProjectName}"
+
+            <TextBlock Text="{Binding CurrentProjectName}"
                        VerticalAlignment="Center"
                        Margin="10,0"
                        FontSize="12"
                        Background="Transparent"/>
         </DockPanel>
+
         <Grid>
-            <TreeView ItemsSource="{Binding ProjectService.CurrentProject}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="300" />
+            </Grid.ColumnDefinitions>
+
+            <TreeView Grid.Column="0"
+                      BorderThickness="0"
+                      ItemsSource="{Binding CurrentProject}"
+                      SelectedItemChanged="TreeView_SelectedItemChanged">
+                <TreeView.Resources>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                    </Style>
+                </TreeView.Resources>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Elements}">
                         <TextBlock Text="{Binding Name}" />
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
             </TreeView>
+
+            <Border Grid.Column="1"
+                    Background="Gray"
+                    Width="1"
+                    HorizontalAlignment="Stretch" />
+
+            <StackPanel Grid.Column="2"
+                        Margin="10">
+                <TextBlock Text="Properties" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" />
+
+                <StackPanel>
+                    <TextBlock Text="Name:" Margin="0,0,0,5" />
+                    <TextBox Text="{Binding SelectedElement.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+            </StackPanel>
         </Grid>
     </DockPanel>
 </Window>

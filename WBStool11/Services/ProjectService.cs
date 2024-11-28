@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
-using System.ComponentModel;
-using WBStool11.Helpers;
+using System.Collections.ObjectModel;
+using System.Windows;
 using WBStool11.Models;
 
 namespace WBStool11.Services;
@@ -11,69 +11,35 @@ public interface IProjectService
     Task OpenProjectAsync();
     Task SaveProjectAsync();
     Task SaveAsProjectAsync();
+    Project CurrentProject { get; set; }
+    ObservableCollection<Project> CurrentProjectAsCollection { get; }
 }
 
-public class ProjectService(IFileService fileService)
-    : ObservableObject, IProjectService, INotifyPropertyChanged
+public class ProjectService(IFileService fileService) : IProjectService
 {
     private readonly IFileService _fileService = fileService;
-
-    private Project _currentProject;
     private string _currentProjectFileName;
-    private bool _hasPendingChanges;
-    private bool HasCurrentProject => _currentProject is not null;
     private bool HasFileName => _currentProjectFileName is not null;
+    private bool HasCurrentProject => CurrentProjectAsCollection.Count > 0;
+
+    public ObservableCollection<Project> CurrentProjectAsCollection { get; } = [null];
 
     public Project CurrentProject
     {
-        get => _currentProject;
-        private set
-        {
-            if (_currentProject != value)
-            {
-                if (_currentProject is not null)
-                {
-                    _currentProject.PropertyChanged -= OnCurrentProjectPropertyChanged;
-                }
-                _currentProject = value;
-                if (_currentProject is not null)
-                {
-                    _currentProject.PropertyChanged += OnCurrentProjectPropertyChanged;
-                }
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(CurrentProjectName));
-            }
-        }
-    }
-
-    public string CurrentProjectName => $"{CurrentProject?.Name ?? string.Empty}{(_hasPendingChanges ? "*" : string.Empty)}";
-    private void OnCurrentProjectPropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        _hasPendingChanges = true;
-        if (e.PropertyName == nameof(Project.Name))
-        {
-            OnPropertyChanged(nameof(CurrentProjectName));
-        }
+        get => CurrentProjectAsCollection.Count > 0 ? CurrentProjectAsCollection[0] : null;
+        set => CurrentProjectAsCollection[0] = value;
     }
 
     public async Task CreateNewProjectAsync()
     {
-        if (_hasPendingChanges)
-        {
-            var cancel = true;
-            if (cancel) { return; }
-            var saveChanges = true;
-            if (saveChanges)
-            {
-                await SaveProjectAsync();
-            }
-        }
-        CurrentProject = new Project { Name = "New Project" };
-        _hasPendingChanges = false;
+        if (await CancelUnsavedChanges()) { return; }
+        CurrentProject = Project.Create();
+        CurrentProject.AreChangesPending = false;
     }
 
     public async Task OpenProjectAsync()
     {
+        if (await CancelUnsavedChanges()) { return; }
         var openFileDialog = new OpenFileDialog
         {
             Title = "Open WBStool Project File",
@@ -86,6 +52,7 @@ public class ProjectService(IFileService fileService)
             if (!string.IsNullOrEmpty(_currentProjectFileName))
             {
                 CurrentProject = await _fileService.ReadFromFileAsync<Project>(_currentProjectFileName);
+                CurrentProject?.AssignParentReferences();
             }
         }
     }
@@ -96,6 +63,7 @@ public class ProjectService(IFileService fileService)
         if (HasFileName)
         {
             await _fileService.SaveToFileAsync(_currentProjectFileName, CurrentProject);
+            CurrentProject.AreChangesPending = false;
         }
         else
         {
@@ -123,8 +91,23 @@ public class ProjectService(IFileService fileService)
             if (!string.IsNullOrEmpty(_currentProjectFileName))
             {
                 await _fileService.SaveToFileAsync(_currentProjectFileName, CurrentProject);
-                _hasPendingChanges = false;
+                CurrentProject.AreChangesPending = false;
             }
         }
+    }
+
+    private async Task<bool> CancelUnsavedChanges()
+    {
+        if (CurrentProject is null || !CurrentProject.AreChangesPending) { return false; }
+        var confirmation = MessageBox.Show(
+            "You have unsaved changes. Do you want to save before continuing?",
+            "Unsaved Changes",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Warning);
+        if (confirmation == MessageBoxResult.Yes)
+        {
+            await SaveProjectAsync();
+        }
+        return confirmation == MessageBoxResult.Cancel;
     }
 }
