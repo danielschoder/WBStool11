@@ -25,14 +25,20 @@
                     <MenuItem Header="About" />
                 </MenuItem>
             </Menu>
-            <TextBlock Text="{Binding CurrentProjectName}"
+            <TextBlock Text="{Binding ProjectService.CurrentProjectName}"
                        VerticalAlignment="Center"
                        Margin="10,0"
                        FontSize="12"
                        Background="Transparent"/>
         </DockPanel>
         <Grid>
-
+            <TreeView ItemsSource="{Binding ProjectService.CurrentProject}">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Elements}">
+                        <TextBlock Text="{Binding Name}" />
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
         </Grid>
     </DockPanel>
 </Window>

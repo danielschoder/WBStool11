@@ -18,6 +18,7 @@ public partial class App : Application
             .ConfigureServices((context, services) =>
             {
                 services.AddSingleton<IFileService, FileService>();
+                services.AddSingleton<IProjectService, ProjectService>();
                 services.AddSingleton<ProjectViewModel>();
                 services.AddTransient<MainWindow>();
             })
