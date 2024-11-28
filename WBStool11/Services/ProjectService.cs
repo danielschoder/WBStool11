@@ -11,6 +11,8 @@ public interface IProjectService
     Task OpenProjectAsync();
     Task SaveProjectAsync();
     Task SaveAsProjectAsync();
+    void AddSubElement(Element element);
+    void AddNextElement(Element element);
     Project CurrentProject { get; set; }
     ObservableCollection<Project> CurrentProjectAsCollection { get; }
 }
@@ -35,6 +37,18 @@ public class ProjectService(IFileService fileService) : IProjectService
         if (await CancelUnsavedChanges()) { return; }
         CurrentProject = Project.Create();
         CurrentProject.AreChangesPending = false;
+    }
+
+    public void AddSubElement(Element element)
+    {
+        element.AddNewLastChild(Element.Create("New"));
+        CurrentProject.AreChangesPending = true;
+    }
+
+    public void AddNextElement(Element element)
+    {
+        element.AddNewLastSibling(Element.Create("New"));
+        CurrentProject.AreChangesPending = true;
     }
 
     public async Task OpenProjectAsync()

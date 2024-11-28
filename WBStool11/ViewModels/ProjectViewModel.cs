@@ -19,6 +19,10 @@ public class ProjectViewModel : ObservableObject, INotifyPropertyChanged
 
     public ICommand SaveAsProjectCommand { get; }
 
+    public ICommand AddSubCommand { get; }
+
+    public ICommand AddNextCommand { get; }
+
     public ObservableCollection<Project> CurrentProject => ProjectService.CurrentProjectAsCollection;
 
     public string CurrentProjectName
@@ -56,6 +60,8 @@ public class ProjectViewModel : ObservableObject, INotifyPropertyChanged
         OpenProjectCommand = new AsyncRelayCommand(OpenProjectAsync);
         SaveProjectCommand = new AsyncRelayCommand(SaveProjectAsync);
         SaveAsProjectCommand = new AsyncRelayCommand(SaveAsProjectAsync);
+        AddSubCommand = new RelayCommand(AddSubElement);
+        AddNextCommand = new RelayCommand(AddNextElement);
     }
 
     private async Task CreateNewProjectAsync()
@@ -90,6 +96,16 @@ public class ProjectViewModel : ObservableObject, INotifyPropertyChanged
     {
         await ProjectService.SaveAsProjectAsync();
         OnPropertyChanged(nameof(CurrentProjectName));
+    }
+
+    private void AddSubElement()
+    {
+        ProjectService.AddSubElement(_selectedElement);
+    }
+
+    private void AddNextElement()
+    {
+        ProjectService.AddNextElement(_selectedElement);
     }
 
     private void OnProjectPropertyChanged(object sender, PropertyChangedEventArgs e)

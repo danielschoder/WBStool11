@@ -30,9 +30,9 @@ public class Project : Element, INotifyPropertyChanged
             _name = "New Project",
         };
         project
-            .AddNewLastChild(new Element { Name = "Phase 1" })
-            .AddNewLastChild(new Element { Name = "Phase 2" })
-            .AddNewLastChild(new Element { Name = "Phase 3" });
+            .AddNewLastChild(Create("Phase 1"))
+            .AddNewLastChild(Create("Phase 2"))
+            .AddNewLastChild(Create("Phase 3"));
         return project;
     }
 

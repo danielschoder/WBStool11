@@ -28,15 +28,23 @@ public class Element : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler PropertyChanged;
 
-    public static Element Create(string Name)
-        => new() { _name = Name };
+    public static Element Create(string name = "New")
+        => new() { _name = name };
 
-    public Element AddNewLastChild(Element element)
+    public Element AddNewLastChild(Element newElement)
     {
-        element.Parent = this;
-        element.Parent._isExpanded = true;
-        _elements ??= [];
-        _elements.Add(element);
+        IsExpanded = true;
+        newElement.Parent = this;
+        Elements ??= [];
+        Elements.Add(newElement);
+        return this;
+    }
+
+    public Element AddNewLastSibling(Element newElement)
+    {
+        Parent.IsExpanded = true;
+        newElement.Parent = Parent;
+        Parent.Elements.Add(newElement);
         return this;
     }
 
